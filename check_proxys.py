@@ -1,33 +1,35 @@
-import threading
-import queue
-
 import requests
+from bs4 import BeautifulSoup
+import random
+import concurrent.futures
 
-q = queue.Queue()
-valid_proxys = []
+
+proxylist = []
 
 with open("proxy_list.txt","r") as f:
     proxies = f.read().split("\n")
     for p in proxies:
-        q.put(p)
+        proxylist.append(p)
+     
+
+
+def extract(proxy):
+    #this was for when we took a list into the function, without conc futures.
+    #proxy = random.choice(proxylist)
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:80.0) Gecko/20100101 Firefox/80.0'}
+    try:
+        #change the url to https://httpbin.org/ip that doesnt block anything
+        r = requests.get('https://www.vivareal.com.br/', headers=headers, proxies={'http' : proxy,'https': proxy}, timeout=1)
+        print('r.json(), r.status_code')
+    except requests.ConnectionError as err:
+        print('.')
+    return proxy
 
 
 
-def check_proxies():
-    global q
-    while not q.empty():
-        proxy = q.get()
-        try:
-            res = requests.get("https://www.vivareal.com.br/imovel/apartamento-3-quartos-santa-maria-bairros-uberlandia-com-garagem-108m2-venda-RS650000-id-2660442378/",
-                               proxies={"http":proxy,
-                                        "https":proxy})
-        
-        except:
-            continue
-
-        if res.status_code == 200:
-            print(proxy)
+#check them all with futures super quick
+with concurrent.futures.ThreadPoolExecutor() as executor:
+        executor.map(extract, proxylist)
 
 
-for _ in range(10):
-    threading.Thread(target=check_proxies).start()
+

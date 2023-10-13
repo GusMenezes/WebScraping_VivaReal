@@ -33,24 +33,24 @@ while posicao < len(lista_url):
         if site_imovel.find('div',class_="inactive-udp__alert")is None:
             
             #Imovel Disponivel
-            lista_imoveis.iat[posicao,14] = 'Disponivel'
+            lista_imoveis.iat[posicao,15] = 'Disponivel'
 
             #Coleta nome anunciante
             full_anunciante = site_imovel.find('p',class_='legal__body')
             print(full_anunciante.contents[5].text)
-            lista_imoveis.iat[posicao,10] = full_anunciante.contents[5].text
+            lista_imoveis.iat[posicao,12] = full_anunciante.contents[5].text
 
             #Coleta Descricao
             if site_imovel.find('p',class_ = 'description__text') is not None:
                 full_descricao = site_imovel.find('p',class_ = 'description__text').text.strip()
-                lista_imoveis.iat[posicao,11] = full_descricao
+                lista_imoveis.iat[posicao,17] = full_descricao
 
             #Coleta codigo imovel
             if site_imovel.find('span',class_='title__code js-external-id') != None:
                 full_codigo = site_imovel.find('span',class_='title__code js-external-id').text.strip()
                 full_codigo = full_codigo.replace('COD.','')
                 full_codigo = full_codigo.replace(' ','')
-                lista_imoveis.iat[posicao,12] = full_codigo
+                lista_imoveis.iat[posicao,14] = full_codigo
             
             #Coleta caracteristicas
             ul_aux = site_imovel.find('ul',class_='amenities__list')
@@ -60,11 +60,11 @@ while posicao < len(lista_url):
                 for c in caracteristicas_imovel:
                     x = c.text
                     full_caracteristicas.append(x)
-            lista_imoveis.iat[posicao,13] = full_caracteristicas
+            lista_imoveis.iat[posicao,16] = full_caracteristicas
 
         else:
             #Imovel indisponivel
-            lista_imoveis.iat[posicao,14] = 'Indisponivel'
+            lista_imoveis.iat[posicao,15] = 'Indisponivel'
 
         #Se nao deu erro, avança While
         posicao +=1

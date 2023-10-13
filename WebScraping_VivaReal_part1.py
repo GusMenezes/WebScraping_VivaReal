@@ -110,8 +110,8 @@ while pages == True:
             full_preco = re.sub('[^0-9]','',iv.find(class_="property-card__price js-property-card-prices js-property-card__price-small").text.strip())
             preco = full_preco
 
-
-            lista_imoveis.append([id_iv,preco,title,bairro,endereco,area,quartos,banheiros,garagens,url_iv,'-','-','-','-','-'])
+            #                       0     1    2   3    4     5        6     7      8        9     10     11    12  13  14  15  16  17    18               
+            lista_imoveis.append([id_iv,preco,'-','-',title,bairro,endereco,area,quartos,banheiros,'-',garagens,'-','-','-','-','-','-',url_iv])
 
 
     except:
@@ -142,7 +142,7 @@ while pages == True:
 #fecha o chromedriver
 navegador.quit()
 
-
-df = pd.DataFrame(lista_imoveis,columns=['ID_VR','Preço','Titulo','Bairro','Endereco','Area','Quartos','Banheiros','Garagens','Url_imovel','Anunciante','Cod.Imobiliaria','Descrição','Caracteristicas','Disponibilidade'])
+#                                           0       1         2          3      4         5        6        7        8         9         10         11         12           13          14                  15                16             17            18                                           
+df = pd.DataFrame(lista_imoveis,columns=['ID_VR','Preço','Condominio','IPTU','Titulo','Bairro','Endereco','Area','Quartos','Banheiros','Suites','Garagens','Anunciante','Telefone','Cod.Imobiliaria','Disponibilidade','Caracteristicas','Descrição','Url_Imovel'])
 df =df.drop_duplicates()
 df.to_csv('Viva_Real_Scrap.csv',index=False)

@@ -7,12 +7,15 @@ import time ,re
 import pandas as pd
 
 headers = {'user-agent': 'Mozilla/5.0'}
+options = Options()
+options.add_argument('--headless')
+options.add_argument('window-size=1366,768')
 
 #Lista de Imoveis
 lista_imoveis = pd.read_csv("Exel_and_Csv_Files\Viva_Real_Scrap.csv",sep=',')
 
 #Pega urls dos imoveis
-lista_url = lista_imoveis['Url_imovel'].copy()
+lista_url = lista_imoveis['Url_Imovel'].copy()
 
 #Posicoes a serem completadas na base
 posicao = int(input('Posiçao inicial: '))
@@ -22,8 +25,11 @@ while posicao < len(lista_url):
     print(lista_url[posicao])
     
     #Coleta HTML site do imovel
-    resposta = requests.get(lista_url[posicao],headers=headers)
-    site_imovel = BeautifulSoup(resposta.text,'html.parser')
+    navegador = webdriver.Chrome(options=options)
+    navegador.get(lista_url[posicao])
+    navegador.execute_script("window.scrollTo(0, 550)")
+    time.sleep(0.5)
+    site_imovel = BeautifulSoup(navegador.page_source,'html.parser')
 
 
     print(posicao)
@@ -39,6 +45,32 @@ while posicao < len(lista_url):
             full_anunciante = site_imovel.find('p',class_='legal__body')
             print(full_anunciante.contents[5].text)
             lista_imoveis.iat[posicao,12] = full_anunciante.contents[5].text
+
+            #Condominio
+            if site_imovel.find('span', class_='price__list-value condominium js-condominium') is not None:
+                full_condominio = re.sub('[^0-9]','',site_imovel.find('span', class_='price__list-value condominium js-condominium').text.strip())
+                lista_imoveis.iat[posicao,2] = full_condominio
+            else:
+                lista_imoveis.iat[posicao,2] = 'Não Informado'
+
+            #Iptu
+            if site_imovel.find('span', class_='price__list-value iptu js-iptu') is not None:
+                full_iptu = re.sub('[^0-9]','',site_imovel.find('span', class_='price__list-value iptu js-iptu').text.strip())
+                lista_imoveis.iat[posicao,3] = full_iptu
+            else:
+                lista_imoveis.iat[posicao,3] = 'Não Informado'
+
+            #Suites
+            if site_imovel.find('small',class_='features__extra-info') is not None:
+                full_suites = site_imovel.find('small',class_='features__extra-info').text.strip()
+                full_suites = full_suites.replace(' ','')
+                full_suites = full_suites.replace('\n','')
+                full_suites = full_suites.replace('suítes','')
+                full_suites = full_suites.replace('suíte','')
+                lista_imoveis.iat[posicao,10] = full_suites
+            else:
+                lista_imoveis.iat[posicao,10] = '-'
+
 
             #Coleta Descricao
             if site_imovel.find('p',class_ = 'description__text') is not None:
@@ -61,6 +93,16 @@ while posicao < len(lista_url):
                     x = c.text
                     full_caracteristicas.append(x)
             lista_imoveis.iat[posicao,16] = full_caracteristicas
+
+            #Telefone
+            receita = navegador.find_element(By.XPATH, '//*[@id="js-site-main"]/div[2]/div[2]/div[2]/div/aside/header/div/a')
+            receita.click()
+            time.sleep(1)
+            site_imovel = BeautifulSoup(navegador.page_source,'html.parser')
+            
+            full_telefone = site_imovel.find('div',class_='teaser__details-phone').text.strip()
+            lista_imoveis.iat[posicao,13] = full_telefone
+            
 
         else:
             #Imovel indisponivel
@@ -85,6 +127,6 @@ while posicao < len(lista_url):
         time.sleep(60)
         print('Erro, 1 min para retomada')
         time.sleep(60)
-
+    navegador.quit()
 
 lista_imoveis.to_excel(r'Exel_and_Csv_Files\Viva_real_Scrap.xlsx')

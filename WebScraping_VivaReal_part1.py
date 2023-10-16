@@ -145,4 +145,4 @@ navegador.quit()
 #                                           0       1         2          3      4         5        6        7        8         9         10         11         12           13          14                  15                16             17            18                                           
 df = pd.DataFrame(lista_imoveis,columns=['ID_VR','Preço','Condominio','IPTU','Titulo','Bairro','Endereco','Area','Quartos','Banheiros','Suites','Garagens','Anunciante','Telefone','Cod.Imobiliaria','Disponibilidade','Caracteristicas','Descrição','Url_Imovel'])
 df =df.drop_duplicates()
-df.to_csv('Viva_Real_Scrap.csv',index=False)
+df.to_csv('Exel_and_Csv_Files\Viva_Real_Scrap.csv',index=False)

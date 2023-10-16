@@ -7,9 +7,9 @@ import time ,re
 import pandas as pd
 
 headers = {'user-agent': 'Mozilla/5.0'}
-options = Options()
-options.add_argument('--headless')
-options.add_argument('window-size=1366,768')
+#options = Options()
+#options.add_argument('--headless')
+#options.add_argument('window-size=1366,768')
 
 #Lista de Imoveis
 lista_imoveis = pd.read_csv("Exel_and_Csv_Files\Viva_Real_Scrap.csv",sep=',')
@@ -25,11 +25,12 @@ while posicao < len(lista_url):
     print(lista_url[posicao])
     
     #Coleta HTML site do imovel
-    navegador = webdriver.Chrome(options=options)
-    navegador.get(lista_url[posicao])
-    navegador.execute_script("window.scrollTo(0, 550)")
-    time.sleep(0.5)
-    site_imovel = BeautifulSoup(navegador.page_source,'html.parser')
+    #navegador = webdriver.Chrome(options=options)
+    #navegador.get(lista_url[posicao])
+    #navegador.execute_script("window.scrollTo(0, 550)")
+    #time.sleep(0.5)
+    resposta = requests.get(lista_url[posicao],headers=headers)
+    site_imovel = BeautifulSoup(resposta.text,'html.parser')
 
 
     print(posicao)
@@ -95,10 +96,15 @@ while posicao < len(lista_url):
             lista_imoveis.iat[posicao,16] = full_caracteristicas
 
             #Telefone
-            receita = navegador.find_element(By.XPATH, '//*[@id="js-site-main"]/div[2]/div[2]/div[2]/div/aside/header/div/a')
-            receita.click()
-            time.sleep(1)
-            site_imovel = BeautifulSoup(navegador.page_source,'html.parser')
+            #receita = navegador.find_element(By.XPATH, '//*[@id="js-site-main"]/div[2]/div[2]/div[2]/div/aside/header/div/a')
+            #receita.click()
+            #time.sleep(1)
+            
+            url_anunciante = site_imovel.find(class_='publisher-details__name').a.get('href')
+            url_anunciante = 'https://www.vivareal.com.br'+url_anunciante
+            
+            reposta = requests.get(url_anunciante,headers=headers)
+            site_imovel = BeautifulSoup(resposta.text,'html.parser')
             
             full_telefone = site_imovel.find('div',class_='teaser__details-phone').text.strip()
             lista_imoveis.iat[posicao,13] = full_telefone
@@ -127,6 +133,6 @@ while posicao < len(lista_url):
         time.sleep(60)
         print('Erro, 1 min para retomada')
         time.sleep(60)
-    navegador.quit()
+    #navegador.quit()
 
 lista_imoveis.to_excel(r'Exel_and_Csv_Files\Viva_real_Scrap.xlsx')

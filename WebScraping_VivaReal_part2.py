@@ -12,7 +12,7 @@ headers = {'user-agent': 'Mozilla/5.0'}
 #options.add_argument('window-size=1366,768')
 
 #Lista de Imoveis
-lista_imoveis = pd.read_csv("Exel_and_Csv_Files\Viva_Real_Scrap.csv",sep=',')
+lista_imoveis = pd.read_csv("Exel_and_Csv_Files\\Viva_Real_Scrap.csv",sep=',')
 
 #Pega urls dos imoveis
 lista_url = lista_imoveis['Url_Imovel'].copy()
@@ -117,7 +117,7 @@ while posicao < len(lista_url):
         #Se nao deu erro, avança While
         posicao +=1
         #Salva cada apartamento em arquivo externo
-        lista_imoveis.to_csv('Exel_and_Csv_Files\Viva_Real_Scrap.csv',index=False)
+        lista_imoveis.to_csv('Exel_and_Csv_Files\\Viva_Real_Scrap.csv',index=False)
 
     #Caso erro na busca, para 10 min e tente de novo.
     except:

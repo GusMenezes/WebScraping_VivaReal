@@ -106,5 +106,5 @@ for i in range(len(lista_url)):
 
 
 df = pd.DataFrame(lista_imoveis)
-df = df.drop_duplicates()
 df.to_csv('Exel_and_Csv_Files\\teste.csv',index=False)
+df.to_excel(r'Exel_and_Csv_Files\\Viva_real_Scrap.xlsx')

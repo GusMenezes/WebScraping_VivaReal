@@ -19,8 +19,8 @@ time.sleep(3)
 lista_url = []
 
 
-pages = 0
-while pages <= 2:
+pages = True
+while pages == True:
     try:    
         
         site = BeautifulSoup(navegador.page_source,'html.parser')
@@ -37,7 +37,7 @@ while pages <= 2:
 
             lista_url.append(url_iv)
         
-        pages +=1
+        
 
     except:
         print('Erro, 10 min para retomada')
@@ -68,9 +68,6 @@ while pages <= 2:
 navegador.quit()
 
 
-with open('Lista_Urls.txt', 'w') as arquivo:
-    for i in range(0,len(lista_url)):
-        if i==len(lista_url)-1:
-            arquivo.write(str(lista_url[i]))
-        else:
-            arquivo.write(str(lista_url[i])+'\n')
+
+df = pd.DataFrame(lista_url,columns=['Url_imovel'])
+df.to_csv('WebScrap_VivaReal1.csv',index=False)

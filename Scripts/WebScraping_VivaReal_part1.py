@@ -6,29 +6,36 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 
+#Opções e Headers usados para requests
 headers = {'user-agent': 'Mozilla/5.0'}
 options = Options()
 #options.add_argument('--headless')
 options.add_argument('window-size=1366,768')
 options.add_argument("'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36'")
 
+url_anuncios = 'https://www.vivareal.com.br/venda/minas-gerais/uberlandia/granja_comercial/#onde=,Minas%20Gerais,Uberl%C3%A2ndia,,,,,city,BR%3EMinas%20Gerais%3ENULL%3EUberlandia,-19.038245,-47.916014,&itl_id=1000183&itl_name=vivareal_-_botao-cta_buscar_to_vivareal_resultado-pesquisa'
+
+
+#Abre Navegador com Selenium
 navegador = webdriver.Chrome(options=options)
-navegador.get('https://www.vivareal.com.br/venda/minas-gerais/uberlandia/bairros/tubalina/lote-terreno_residencial/#onde=,Minas%20Gerais,Uberl%C3%A2ndia,Bairros,Tubalina,,,neighborhood,BR%3EMinas%20Gerais%3ENULL%3EUberlandia%3EBarrios%3ETubalina,,,;,Minas%20Gerais,Uberl%C3%A2ndia,Bairros,Cidade%20Jardim,,,neighborhood,BR%3EMinas%20Gerais%3ENULL%3EUberlandia%3EBarrios%3ECidade%20Jardim,,,;,Minas%20Gerais,Uberl%C3%A2ndia,Bairros,Nova%20Uberlandia,,,neighborhood,BR%3EMinas%20Gerais%3ENULL%3EUberlandia%3EBarrios%3ENova%20Uberlandia,,,;,Minas%20Gerais,Uberl%C3%A2ndia,Bairros,Patrim%C3%B4nio,,,neighborhood,BR%3EMinas%20Gerais%3ENULL%3EUberlandia%3EBarrios%3EPatrimonio,,,;,Minas%20Gerais,Uberl%C3%A2ndia,Bairros,Morada%20da%20Colina,,,neighborhood,BR%3EMinas%20Gerais%3ENULL%3EUberlandia%3EBarrios%3EMorada%20da%20Colina,,,;,Minas%20Gerais,Uberl%C3%A2ndia,Bairros,Vigilato%20Pereira,,,neighborhood,BR%3EMinas%20Gerais%3ENULL%3EUberlandia%3EBarrios%3EVigilato%20Pereira,,,;,Minas%20Gerais,Uberl%C3%A2ndia,Bairros,Saraiva,,,neighborhood,BR%3EMinas%20Gerais%3ENULL%3EUberlandia%3EBarrios%3ESaraiva,,,;,Minas%20Gerais,Uberl%C3%A2ndia,Bairros,Lagoinha,,,neighborhood,BR%3EMinas%20Gerais%3ENULL%3EUberlandia%3EBarrios%3ELagoinha,,,;,Minas%20Gerais,Uberl%C3%A2ndia,Bairros,Carajas,,,neighborhood,BR%3EMinas%20Gerais%3ENULL%3EUberlandia%3EBarrios%3ECarajas,,,;,Minas%20Gerais,Uberl%C3%A2ndia,Bairros,Pampulha,,,neighborhood,BR%3EMinas%20Gerais%3ENULL%3EUberlandia%3EBarrios%3EPampulha,,,;,Minas%20Gerais,Uberl%C3%A2ndia,Bairros,Jardim%20Kara%C3%ADba,,,neighborhood,BR%3EMinas%20Gerais%3ENULL%3EUberlandia%3EBarrios%3EJardim%20Karaiba,,,;,Minas%20Gerais,Uberl%C3%A2ndia,Bairros,Jardim%20Inconfid%C3%AAncia,,,neighborhood,BR%3EMinas%20Gerais%3ENULL%3EUberlandia%3EBarrios%3EJardim%20Inconfidencia,,,;,Minas%20Gerais,Uberl%C3%A2ndia,Bairros,Santa%20Luzia,,,neighborhood,BR%3EMinas%20Gerais%3ENULL%3EUberlandia%3EBarrios%3ESanta%20Luzia,,,;,Minas%20Gerais,Uberl%C3%A2ndia,Bairros,Granada,,,neighborhood,BR%3EMinas%20Gerais%3ENULL%3EUberlandia%3EBarrios%3EGranada,,,;,Minas%20Gerais,Uberl%C3%A2ndia,Bairros,S%C3%A3o%20Jorge,,,neighborhood,BR%3EMinas%20Gerais%3ENULL%3EUberlandia%3EBarrios%3ESao%20Jorge,,,;,Minas%20Gerais,Uberl%C3%A2ndia,Bairros,Laranjeiras,,,neighborhood,BR%3EMinas%20Gerais%3ENULL%3EUberlandia%3EBarrios%3ELaranjeiras,,,;,Minas%20Gerais,Uberl%C3%A2ndia,Bairros,Shopping%20Park,,,neighborhood,BR%3EMinas%20Gerais%3ENULL%3EUberlandia%3EBarrios%3EShopping%20Park,,,;,Minas%20Gerais,Uberl%C3%A2ndia,Bairros,Jardim%20Sul,,,neighborhood,BR%3EMinas%20Gerais%3ENULL%3EUberlandia%3EBarrios%3EJardim%20Sul,,,;,Minas%20Gerais,Uberl%C3%A2ndia,Bairros,G%C3%A1vea,,,neighborhood,BR%3EMinas%20Gerais%3ENULL%3EUberlandia%3EBarrios%3EGavea,,,')
+navegador.get(url_anuncios)
 time.sleep(3)
 
-lista_url = []
+
+lista_url = []  #Lista para guardar todos links de cada Imovel
 
 
-pages = True
-while pages == True:
-    try:    
-        
+pages = 0   #Enquanto verdadeiro, existe pagina seguinte
+while pages <= 5:
+    try:     
+        #Pega o html fatorado
         site = BeautifulSoup(navegador.page_source,'html.parser')
         time.sleep(5)
         
+        #Pega todas as tags que contem as urls desejadas
         imoveis = site.find_all('div',attrs={"data-type":"property"})
 
-        for iv in imoveis:
+        for iv in imoveis: #for 
            
             #Coleta Url imovel
             full_url = iv.find(class_='property-card__main-info').a.get('href')
@@ -53,7 +60,7 @@ while pages == True:
         print('Erro, 1 min para retomada')
         time.sleep(60)
 
-
+    pages +=1
     #Muda de pagina
     try:
         receita = navegador.find_element(By.XPATH, '//*[@id="js-site-main"]/div[2]/div[1]/section/div[2]/div[2]/div/ul/li[9]/button')
@@ -70,4 +77,4 @@ navegador.quit()
 
 
 df = pd.DataFrame(lista_url,columns=['Url_imovel'])
-df.to_csv('WebScrap_VivaReal1.csv',index=False)
+df.to_csv("D:\ginga\Documents\Gustavo\WebScraping_VivaReal\WebScraping_VivaReal\Exel_and_Csv_Files\LISTA_URLS_VIVAREAL.csv",index=False)

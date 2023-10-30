@@ -6,10 +6,10 @@ from lxml.html import fromstring
 import json
 
 #Headers usado para request
-headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36'}
+headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36'}
 
 #Leitura do Csv de Urls de Imoveis e Leitura ou criação de DataFrame de Info de Imoveis
-df = pd.read_csv("D:\\ginga\\Documents\\Gustavo\\WebScraping_VivaReal\\WebScraping_VivaReal\\Exel_and_Csv_Files\\LISTA_URLS_VIVAREAL.csv",sep=',')
+df = pd.read_csv("Exel_and_Csv_Files\LISTA_URLS_VIVAREAL 26-10-2023.csv",sep=',')
 try:
     df_imoveis = pd.read_csv("D:\\ginga\\Documents\\Gustavo\\WebScraping_VivaReal\\WebScraping_VivaReal\\Exel_and_Csv_Files\\Viva_Real_Scrap.csv",sep=',')
 except:
@@ -20,6 +20,10 @@ except:
 lista_url = df['Url_imovel'].copy()
 lista_imoveis = []
 
+#session
+s = requests.Session()
+
+
 
 print(len(lista_url))
 pos = len(df_imoveis) #Ultimo imovel guardado 
@@ -28,9 +32,9 @@ for pos in range(pos,len(lista_url)):#Para cada url na lista_url
     try:        
         
         #Request site imovel
-        time.sleep(2)
-        resposta = requests.get(lista_url[pos],headers=headers)
-        print(resposta.status_code)
+        time.sleep(1)
+        resposta = s.get(lista_url[pos],headers=headers)
+        print('Status_Code=',resposta.status_code)
         
         #Obtendo script desejado
         soup = fromstring(resposta.text)
@@ -45,8 +49,6 @@ for pos in range(pos,len(lista_url)):#Para cada url na lista_url
         
         #Transformando script tipo string para tipo dicionario
         json_object = json.loads(js.strip("()"))
-        with open('teste.txt','w') as f:
-            f.write(js)
 
         #Obtendo infos desejadas do script
         try: #Pega Id do proprio viva real
@@ -226,7 +228,7 @@ for pos in range(pos,len(lista_url)):#Para cada url na lista_url
         
         #Guarda todas as Infos do Imoveis em uma Lista
         lista_imoveis.append(data)
-        print(pos) #print para acompanhamento do script
+        print('Posição =',pos) #print para acompanhamento do script
 
 
     #Tratamento de erro: Caso aconteça algum empecilho na obtençao dos dados do imovel, para o Script por 5min e tenta de novo

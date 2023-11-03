@@ -1,20 +1,31 @@
 import requests
 import time ,re
+import datetime
+import mysql.connector
 import pandas as pd
 from bs4 import BeautifulSoup
 from lxml.html import fromstring
 import json
+
+
+#tempo em que o script python foi iniciado
+tempo = datetime.datetime.now().strftime("%Y-%m-%d, %H:%M:%S")
+
+#Estabelecendo conexao com sgbd
+conexao = mysql.connector.connect(
+    host = '193.203.183.54',
+    user = 'perdigueiro',
+    password = 'V3nc3d0r3s@23',
+    database = 'perdigueiro',
+)
+cursor = conexao.cursor()
+
 
 #Headers usado para request
 headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36'}
 
 #Leitura do Csv de Urls de Imoveis e Leitura ou criação de DataFrame de Info de Imoveis
 df = pd.read_csv("Exel_and_Csv_Files\LISTA_URLS_VIVAREAL 26-10-2023.csv",sep=',')
-try:
-    df_imoveis = pd.read_csv("D:\\ginga\\Documents\\Gustavo\\WebScraping_VivaReal\\WebScraping_VivaReal\\Exel_and_Csv_Files\\Viva_Real_Scrap.csv",sep=',')
-except:
-    df_imoveis = pd.DataFrame(columns=['ID_VivaReal','UnitType','ListingType','State','City','Neighborhood','Street','StreetNumber','ZipCode','Title','ExternalId','Price','Iptu','CondominiumFee','UsableAreas','Bedrooms','Bathrooms','Suites','ParkingSpaces','Status','Amenities','Description','CreatedAt','Floors','Advertiser_Name','Advertiser_License','Advertiser_Phone_Primary','Advertiser_Phone_Mobile','Url_Place'])
-
 
 #listas que serão usadas no for
 lista_url = df['Url_imovel'].copy()
@@ -26,9 +37,9 @@ s = requests.Session()
 
 
 print(len(lista_url))
-pos = len(df_imoveis) #Ultimo imovel guardado 
-print(pos)
-for pos in range(pos,len(lista_url)):#Para cada url na lista_url
+
+
+for pos in range(0,len(lista_url)):#Para cada url na lista_url
     try:        
         
         #Request site imovel
@@ -36,6 +47,10 @@ for pos in range(pos,len(lista_url)):#Para cada url na lista_url
         resposta = s.get(lista_url[pos],headers=headers)
         print('Status_Code=',resposta.status_code)
         
+        #HTML para pegar informacoes especificas
+        html = BeautifulSoup(resposta.text,'html.parser')
+
+
         #Obtendo script desejado
         soup = fromstring(resposta.text)
         script = soup.xpath('/html/body/script[1]/text()')
@@ -52,63 +67,65 @@ for pos in range(pos,len(lista_url)):#Para cada url na lista_url
 
         #Obtendo infos desejadas do script
         try: #Pega Id do proprio viva real
-            id = json_object.get('listing').get('id')
+            id_ambiente = json_object.get('listing').get('id')
+            id_ambiente = int(id_ambiente)/1000
         except:
-            id = ''
+            id_ambiente = ''
         
         try: #Pega tipo de unidade do imovel
-            unitType = json_object.get('listing').get('unitTypes')[0]
+            tipo_imovel = json_object.get('listing').get('unitTypes')[0]
         except:
-            unitType = ''
+            tipo_imovel = ''
         
         try: #Condiçao do Imovel
-            listingType = json_object.get('listing').get('listingType')
+            condicao_imovel = json_object.get('listing').get('listingType')
         except:
-            listingType = ''
+            condicao_imovel = ''
 
         try: #Estado
-            state = json_object.get('listing').get('address').get('state')
+            estado = json_object.get('listing').get('address').get('state')
         except:
-            state = ''
+            estado = ''
 
         try: #Cidade
-            city = json_object.get('listing').get('address').get('city')
+            cidade = json_object.get('listing').get('address').get('city')
         except:
-            city = ''
+            cidade = ''
 
         try: #bairro
-            neighborhood = json_object.get('listing').get('address').get('neighborhood')
+            bairro = json_object.get('listing').get('address').get('neighborhood')
         except:
-            neighborhood = ''
+            bairro = ''
         
         try: #Rua
-            street = json_object.get('listing').get('address').get('street')
+            rua = json_object.get('listing').get('address').get('street')
         except:
-            street = ''
+            rua = ''
         
         try: #Numero do imovel
-            streetNumber = json_object.get('listing').get('address').get('streetNumber')
+            numero_casa = json_object.get('listing').get('address').get('streetNumber')
         except:
-            streetNumber = ''
+            numero_casa = ''
 
         try: #Cep
-            zipcode = json_object.get('listing').get('address').get('zipCode')
-        except:''
+            cep = json_object.get('listing').get('address').get('zipCode')
+        except:
+            cep = ''
 
         try: #Titulo do anuncio
-            title = json_object.get('listing').get('title')
+            titulo = json_object.get('listing').get('title')
         except:
-            title = ''
+            titulo = ''
 
         try: #Id da imobiliaria
-            externalId = json_object.get('listing').get('externalId')
+            codigo_imobiliaria = json_object.get('listing').get('externalId')
         except:
-            externalId = ''
+            codigo_imobiliaria = ''
 
         try: #Preco imovel
-            price = json_object.get('listing').get('pricingInfos')[0].get('price')
+            preco = json_object.get('listing').get('pricingInfos')[0].get('price')
         except:
-            price = ''
+            preco = ''
 
         try: #iptu do imovel
             iptu = json_object.get('listing').get('pricingInfos')[0].get('yearlyIptu')
@@ -116,24 +133,24 @@ for pos in range(pos,len(lista_url)):#Para cada url na lista_url
             iptu = ''
         
         try: #Preço do Condominio do imovel
-            condominiumFee = json_object.get('listing').get('pricingInfos')[0].get('monthlyCondoFee')
+            preco_condominio = json_object.get('listing').get('pricingInfos')[0].get('monthlyCondoFee')
         except:
-            condominiumFee = ''
+            preco_condominio = ''
         
         try: #Area do imovel
-            usableAreas = json_object.get('listing').get('usableAreas')[0]
+            area = json_object.get('listing').get('usableAreas')[0]
         except:
-            usableAreas = ''
+            area = ''
         
         try: #Numero de quartos 
-            bedrooms = json_object.get('listing').get('bedrooms')[0]
+            quartos = json_object.get('listing').get('bedrooms')[0]
         except:
-            bedrooms = ''
+            quartos = ''
 
         try: #Numero de banheiros 
-            bathrooms = json_object.get('listing').get('bathrooms')[0]
+            banheiros = json_object.get('listing').get('bathrooms')[0]
         except:
-            bathrooms = ''
+            banheiros = ''
 
         try: #Numero de suites
             suites = json_object.get('listing').get('suites')[0]
@@ -141,93 +158,115 @@ for pos in range(pos,len(lista_url)):#Para cada url na lista_url
             suites = ''
 
         try: #Numero de espaços de garagem
-            parkingSpaces = json_object.get('listing').get('parkingSpaces')[0]
+            garagens = json_object.get('listing').get('parkingSpaces')[0]
         except:
-            parkingSpaces = ''
+            garagens = ''
         
         try: #Status do anuncio
-            status = json_object.get('listing').get('status')
+            status_anuncio = json_object.get('listing').get('status')
         except:
-            status = ''
+            status_anuncio = ''
 
         try: #Caracteristicas do imovel
-            amenities = json_object.get('listing').get('amenities')
+            caracteristicas = []
+            ul_caracteristicas = html.find('ul',class_='amenities__list')
+            li_caracteristicas = ul_caracteristicas.find_all('li')
+            for li in li_caracteristicas:
+                caracteristicas.append(li.text.strip())
         except:
             amenities = ''
 
         try: #Descricao do imovel
-            description = json_object.get('listing').get('description').replace('<br>','')
+            descricao = json_object.get('listing').get('description').replace('<br>','').replace('"','*').replace("'",'*')
         except:
-            description = ''
+            descricao = ''
 
         try: #data de criaçao do anuncio
-            createdAt = json_object.get('listing').get('createdAt')
+            data_criacao = json_object.get('listing').get('createdAt')
         except:
-            createdAt = ''
-        
-        try: #Andares
-            floors = json_object.get('listing').get('floors')
-        except:
-            floors = ''
+            data_criacao = ''
         
         try: #Nome do Anunciante 
-            advertiserName = json_object.get('account').get('name')
+            anunciante = json_object.get('account').get('name')
         except:
-            advertiserName = ''
+            anunciante = ''
         
         try: #Numero de Licença do anunciante
-            advertiserLicenseNumber = json_object.get('account').get('licenseNumber')
+            licenca_anunciante = json_object.get('account').get('licenseNumber')
         except:
-            advertiserLicenseNumber = ''
+            licenca_anunciante = ''
         
         try: #telefone primario do anunciante
-            advertiserPhonePrimary = json_object.get('account').get('phone').get('primary')
+            telefone_primario_anunciante = json_object.get('account').get('phone').get('primary')
         except:
-            advertiserPhonePrimary = ''
+            telefone_primario_anunciante = ''
         
         try: #telefone secundario do anunciante
-            advertiserPhoneMobile = json_object.get('account').get('phone').get('mobile')
+            telefone_secundario_anunciante = json_object.get('account').get('phone').get('mobile')
         except:
-            advertiserPhoneMobile = ''
+            telefone_secundario_anunciante = ''
         
         #Url do anuncio do imovel
         urlImovel = lista_url[pos]
 
         #Dicionario para guardar todas as variaveis
         data = {
-            'ID_VivaReal':id,                                   #ID VivaReal
-            'UnitType':unitType,                                #Tipo de Imovel
-            'ListingType':listingType,                          #Condiçao do Imovel
-            'State':state,                                      #Estado
-            'City':city,                                        #Cidade
-            'Neighborhood':neighborhood,                        #Bairro
-            'Street':street,                                    #Rua
-            'StreetNumber':streetNumber,                        #Numero na Rua
-            'ZipCode':int(zipcode),                             #Cep
-            'Title':title,                                      #Titulo do Anuncio
-            'ExternalId':externalId,                            #Id da Imobiliaria
-            'Price':float(price),                               #Preço do Imovel
-            'Iptu':iptu,                                        #Iptu
-            'CondominiumFee':condominiumFee,                    #Preço do Condominio
-            'UsableAreas':usableAreas,                          #Area do imovel
-            'Bedrooms':bedrooms,                                #Numero de quartos
-            'Bathrooms':bathrooms,                              #  --   de banheiros
-            'Suites':suites,                                    #  --   de Suites
-            'ParkingSpaces':parkingSpaces,                      #  --   de Vagas de Garagem
-            'Status':status,                                    #Status do Anuncio (Ativado/Desativado)
-            'Amenities':amenities,                              #Caracteristicas do Imovel
-            'Description':description,                          #Descriçao do Imovel
-            'CreatedAt':createdAt,                              #Data de Criaçao do Imovel
-            'Floors':floors,                                    #Numero de Andares
-            'Advertiser_Name':advertiserName,                   #Nome do Anunciante
-            'Advertiser_License':advertiserLicenseNumber,       #Numero de licença do Anunciante
-            'Advertiser_Phone_Primary': advertiserPhonePrimary, #Telefone Primario do Anunciante
-            'Advertiser_Phone_Mobile': advertiserPhoneMobile,   #Telefone Secundario do Anunciante
-            'Url_Place':urlImovel                               #Url do Anuncio 
+            'id_ambiente':id_ambiente,                                          #ID VivaReal
+            'tipo_imovel':tipo_imovel,                                          #Tipo de Imovel
+            'condicao_imovel':condicao_imovel,                                  #Condiçao do Imovel
+            'estado':estado,                                                    #Estado
+            'cidade':cidade,                                                    #Cidade
+            'bairro':bairro,                                                    #Bairro
+            'rua':rua,                                                          #Rua
+            'numero_casa':numero_casa,                                          #Numero na Rua
+            'cep':int(cep),                                                     #Cep
+            'titulo':titulo,                                                    #Titulo do Anuncio
+            'codigo_imobiliaria':codigo_imobiliaria,                            #Id da Imobiliaria
+            'preco':float(preco),                                               #Preço do Imovel
+            'iptu':iptu,                                                        #Iptu
+            'preco_condominio':preco_condominio,                                #Preço do Condominio
+            'area':area,                                                        #Area do imovel
+            'quartos':quartos,                                                  #Numero de quartos
+            'banheiros':banheiros,                                              #  --   de banheiros
+            'suites':suites,                                                    #  --   de Suites
+            'garagens':garagens,                                                #  --   de Vagas de Garagem
+            'status_anuncio':status_anuncio,                                    #Status do Anuncio (Ativado/Desativado)
+            'caracteristicas':caracteristicas,                                  #Caracteristicas do Imovel
+            'descricao':descricao,                                              #Descriçao do Imovel
+            'data_criacao':data_criacao,                                        #Data de Criaçao do Imovel
+            'anunciante':anunciante,                                            #Nome do Anunciante
+            'licenca_anunciante':licenca_anunciante,                            #Numero de licença do Anunciante
+            'telefone_primario_anunciante': telefone_primario_anunciante,       #Telefone Primario do Anunciante
+            'telefone_secundario_anunciante': telefone_secundario_anunciante,   #Telefone Secundario do Anunciante
+            'url':urlImovel                                                     #Url do Anuncio 
         }
         
-        #Guarda todas as Infos do Imoveis em uma Lista
-        lista_imoveis.append(data)
+        #Guarda as infos dos imoveis na tabela garimpo do banco de dados, e pega o id_garimpo gerado
+        comando = f"""INSERT INTO garimpo (idambiente, ambiente, caminho , criadopor, criadoem, alteradopor, alteradoem) 
+                        VALUES ("{id_ambiente}","VivaReal", "{urlImovel}", "Gustavo", "{tempo}", "Gustavo", "{tempo}")"""
+        cursor.execute(comando)
+        conexao.commit()
+        comando = """ SELECT LAST_INSERT_ID();"""
+        cursor.execute(comando)
+        id_garimpo = cursor.fetchall()
+        id_garimpo = id_garimpo[0][0]
+        
+
+        tempo = datetime.datetime.now().strftime("%Y-%m-%d, %H:%M:%S")
+        #Guarda as infos na tabela garimpo dados
+        for item in data.items():
+            if isinstance(item[1],list):
+                for c in item[1]:
+                    comando = f"""INSERT INTO garimpodados (idgarimpo , chave, valor , criadopor, criadoem, alteradopor, alteradoem) 
+                                VALUES ("{id_garimpo}","{item[0]}", "{c}", "Gustavo", "{tempo}", "Gustavo", "{tempo}")"""
+                    cursor.execute(comando)
+                    conexao.commit()
+            else:
+                comando = f"""INSERT INTO garimpodados (idgarimpo , chave, valor , criadopor, criadoem, alteradopor, alteradoem) 
+                                VALUES ("{id_garimpo}","{item[0]}", "{item[1]}", "Gustavo", "{tempo}", "Gustavo", "{tempo}")"""
+                cursor.execute(comando)
+                conexao.commit()
+
         print('Posição =',pos) #print para acompanhamento do script
 
 
@@ -243,18 +282,9 @@ for pos in range(pos,len(lista_url)):#Para cada url na lista_url
         print('Erro, 1 min para retomada')
         time.sleep(60)
 
-    #Para cada Imovel, Atualiza arquivo Csv
-    df_imoveis = pd.concat([df_imoveis,pd.DataFrame(lista_imoveis)],ignore_index=True)
-    df_imoveis.to_csv("D:\\ginga\\Documents\\Gustavo\\WebScraping_VivaReal\\WebScraping_VivaReal\\Exel_and_Csv_Files\\Viva_Real_Scrap.csv",index=False)
-    #Zera a lista para não dar erro
-    lista_imoveis = []
+    
 
+#fechando conexao com banco de dados
+cursor.close()
+conexao.close()
 
-#Cria data Frame
-df = pd.DataFrame(lista_imoveis)
-#try:
-#    df.drop_duplicates()
-#except:
-#    j= 1
-
-df.to_excel(r"D:\\ginga\Documents\\Gustavo\WebScraping_VivaReal\\WebScraping_VivaReal\\Exel_and_Csv_Files\\Viva_Real_Scrap.xlsx")

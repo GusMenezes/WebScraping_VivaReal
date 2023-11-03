@@ -4,6 +4,7 @@ import time ,re
 import pandas as pd
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
 
 #Opções e Headers usados para requests
@@ -13,7 +14,7 @@ options = Options()
 options.add_argument('window-size=1366,768')
 options.add_argument("'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36'")
 
-url_anuncios = 'https://www.vivareal.com.br/venda/minas-gerais/uberlandia/granja_comercial/#onde=,Minas%20Gerais,Uberl%C3%A2ndia,,,,,city,BR%3EMinas%20Gerais%3ENULL%3EUberlandia,-19.038245,-47.916014,&itl_id=1000183&itl_name=vivareal_-_botao-cta_buscar_to_vivareal_resultado-pesquisa'
+url_anuncios = 'https://www.vivareal.com.br/venda/minas-gerais/uberlandia/condominio_residencial/#onde=Brasil,Minas%20Gerais,Uberl%C3%A2ndia,,,,,,BR%3EMinas%20Gerais%3ENULL%3EUberlandia,,,&preco-desde=1000000'
 
 
 #Abre Navegador com Selenium
@@ -25,8 +26,8 @@ time.sleep(3)
 lista_url = []  #Lista para guardar todos links de cada Imovel
 
 
-pages = 0   #Enquanto verdadeiro, existe pagina seguinte
-while pages <= 5:
+pages = True   #Enquanto verdadeiro, existe pagina seguinte
+while pages == True:
     try:     
         #Pega o html fatorado
         site = BeautifulSoup(navegador.page_source,'html.parser')
@@ -60,14 +61,16 @@ while pages <= 5:
         print('Erro, 1 min para retomada')
         time.sleep(60)
 
-    pages +=1
+
     #Muda de pagina
     try:
-        receita = navegador.find_element(By.XPATH, '//*[@id="js-site-main"]/div[2]/div[1]/section/div[2]/div[2]/div/ul/li[9]/button')
-        navegador.execute_script("window.scrollTo(0, 9700)")
-        time.sleep(1)
+        receita = navegador.find_element(By.XPATH, '/html/body/main/div[2]/div[1]/section/div[2]/div[2]/div/ul/li[9]/button')
+        navegador.execute_script("arguments[0].scrollIntoView(true);", receita)
+        time.sleep(0.5)
         receita.click()
-    except:
+
+    except Exception as e:
+        print(e)
         pages = False
 
 

@@ -1,13 +1,23 @@
-import requests
-import time
-import datetime
-import mysql.connector
+import requests,time,datetime,mysql.connector,json,functools
 import pandas as pd
 from bs4 import BeautifulSoup
 from lxml.html import fromstring
-import json
 import numpy as np
 from pathlib import Path
+
+
+def extrai_atributos(json_object, attribute_path, index=0):
+    try:
+        # Use reduce to traverse the attribute path in the JSON object
+        value = functools.reduce(lambda d, key: d.get(key, {}), attribute_path, json_object)
+        
+        # If it's a list, use the specified index
+        if isinstance(value, list):
+            value = value[index]
+
+        return value
+    except (KeyError, TypeError, IndexError):
+        return None
 
 
 def traduz_palavra(palavra):
@@ -192,10 +202,10 @@ parent_dir.mkdir(exist_ok=True)
 
 #Estabelecendo conexao com sgbd
 conexao = mysql.connector.connect(
-    host = '193.203.183.54',
-    user = 'perdigueiro',
+    host = 'uberlandiaonline.com.br',
+    user = 'uberla14_perdigueiro',
     password = 'V3nc3d0r3s@23',
-    database = 'perdigueiro',
+    database = 'uberla14_perdigueiro',
 )
 cursor = conexao.cursor()
 
@@ -204,7 +214,7 @@ cursor = conexao.cursor()
 headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36'}
 
 #Leitura do Csv de Urls de Imoveis e Leitura ou criação de DataFrame de Info de Imoveis
-df = pd.read_csv("Exel_and_Csv_Files\LISTA_URLS_VIVAREAL 26-10-2023.csv",sep=',')
+df = pd.read_csv(r"WebScraping_VivaReal\Exel_and_Csv_Files\LISTA_URLS_VIVAREAL.csv",sep=',')
 
 #listas que serão usadas no for
 lista_url = df['Url_imovel'].copy()
@@ -212,8 +222,6 @@ lista_imoveis = []
 
 #session
 s = requests.Session()
-
-
 
 print(len(lista_url))
 
@@ -244,6 +252,12 @@ for pos in range(0,10):#Para cada url na lista_url
         #Transformando script tipo string para tipo dicionario
         json_object = json.loads(js.strip("()"))
 
+        try:
+            imagens = html.find_all('li',class_='carousel__slide js-carousel-item-wrapper')
+        except:
+            imagens = None
+
+        #Obtendo infos desejadas do script
         try:
             imagens = html.find_all('li',class_='carousel__slide js-carousel-item-wrapper')
         except:
@@ -419,64 +433,64 @@ for pos in range(0,10):#Para cada url na lista_url
             'url_anuncio':url_anuncio                       #Url do Anuncio 
         }
         
-        tempo = datetime.datetime.now().strftime("%Y-%m-%d, %H:%M:%S")
-        #Guarda as infos dos imoveis na tabela garimpo do banco de dados, e pega o id_garimpo gerado
-        comando = f"""INSERT INTO garimpo (idambiente, ambiente, caminho , criadopor, criadoem, alteradopor, alteradoem) 
-                        VALUES ("{id_ambiente}","VivaReal", "{url_anuncio}", "Gustavo", "{tempo}", "Gustavo", "{tempo}")"""
-        cursor.execute(comando)
-        conexao.commit()
-        comando = """ SELECT LAST_INSERT_ID();"""
-        cursor.execute(comando)
-        id_garimpo = cursor.fetchall()
-        id_garimpo = id_garimpo[0][0]
+        # tempo = datetime.datetime.now().strftime("%Y-%m-%d, %H:%M:%S")
+        # #Guarda as infos dos imoveis na tabela garimpo do banco de dados, e pega o id_garimpo gerado
+        # comando = f"""INSERT INTO garimpo (idambiente, ambiente, caminho , criadopor, criadoem, alteradopor, alteradoem) 
+        #                 VALUES ("{id_ambiente}","VivaReal", "{url_anuncio}", "Gustavo", "{tempo}", "Gustavo", "{tempo}")"""
+        # cursor.execute(comando)
+        # conexao.commit()
+        # comando = """ SELECT LAST_INSERT_ID();"""
+        # cursor.execute(comando)
+        # id_garimpo = cursor.fetchall()
+        # id_garimpo = id_garimpo[0][0]
         
 
-        tempo = datetime.datetime.now().strftime("%Y-%m-%d, %H:%M:%S")
-        #Guarda as infos na tabela garimpo dados
-        for item in data.items():
-            if item[1] is not None:    
-                #Caso variavel do imovel seja tipo lista
-                if isinstance(item[1],list):
-                    for c in item[1]:
-                        comando = f"""INSERT INTO garimpodados (idgarimpo , chave, valor , criadopor, criadoem, alteradopor, alteradoem) 
-                                    VALUES ("{id_garimpo}","{traduz_palavra(c)}", "sim", "Gustavo", "{tempo}", "Gustavo", "{tempo}")"""
-                        cursor.execute(comando)
-                        conexao.commit()
+        # tempo = datetime.datetime.now().strftime("%Y-%m-%d, %H:%M:%S")
+        # #Guarda as infos na tabela garimpo dados
+        # for item in data.items():
+        #     if item[1] is not None:    
+        #         #Caso variavel do imovel seja tipo lista
+        #         if isinstance(item[1],list):
+        #             for c in item[1]:
+        #                 comando = f"""INSERT INTO garimpodados (idgarimpo , chave, valor , criadopor, criadoem, alteradopor, alteradoem) 
+        #                             VALUES ("{id_garimpo}","{traduz_palavra(c)}", "sim", "Gustavo", "{tempo}", "Gustavo", "{tempo}")"""
+        #                 cursor.execute(comando)
+        #                 conexao.commit()
                 
-                else:
-                    comando = f"""INSERT INTO garimpodados (idgarimpo , chave, valor , criadopor, criadoem, alteradopor, alteradoem) 
-                                    VALUES ("{id_garimpo}","{item[0]}", "{traduz_palavra(item[1])}", "Gustavo", "{tempo}", "Gustavo", "{tempo}")"""
-                    cursor.execute(comando)
-                    conexao.commit()
-            else:
-                pass
+        #         else:
+        #             comando = f"""INSERT INTO garimpodados (idgarimpo , chave, valor , criadopor, criadoem, alteradopor, alteradoem) 
+        #                             VALUES ("{id_garimpo}","{item[0]}", "{traduz_palavra(item[1])}", "Gustavo", "{tempo}", "Gustavo", "{tempo}")"""
+        #             cursor.execute(comando)
+        #             conexao.commit()
+        #     else:
+        #         pass
 
 
         #Salva as fotos e guarda os paths
         #Cria pasta para o imovel especifico
-        directory = parent_dir / str(id_ambiente)
-        directory.mkdir(exist_ok=True)
+        # # directory = parent_dir / str(id_ambiente)
+        # # directory.mkdir(exist_ok=True)
 
-        contador = 1 #contador para ajudar no nomeamento das fotos
+        # # contador = 1 #contador para ajudar no nomeamento das fotos
 
-        for img in imagens: #Para cada tag/img na lista imagens
-            url_img = img.find('img').get('src')                        #Acha a tag (img) e pega o conteudo de source
-            url_img = url_img.replace("crop/142x80","fit-in/870x653")   #faz o tratamento necessario da string
-                                                                        #faz um append na lista de urls
-            #Download da Imagem
-            #request da url da img
-            r = requests.get(url_img,headers=headers)
-            time.sleep(1)
-            directory_imagem = directory / f'foto_{contador}.jpg'
-            print(directory_imagem)
-            #Cria arquivo jpg e escreve conteudo do request nele
-            with open(directory_imagem,'wb') as f:
-                f.write(r.content)
-            contador +=1  #contador incrementa 1
-            comando = f"""INSERT INTO garimpofotos (idambiente, ambiente, url , criadopor, criadoem, alteradopor, alteradoem) 
-                            VALUES ("{id_ambiente}","VivaReal", "{directory_imagem}", "Gustavo", "{tempo}", "Gustavo", "{tempo}")"""
-            cursor.execute(comando)
-            conexao.commit()    
+        # # for img in imagens: #Para cada tag/img na lista imagens
+        # #     url_img = img.find('img').get('src')                        #Acha a tag (img) e pega o conteudo de source
+        # #     url_img = url_img.replace("crop/142x80","fit-in/870x653")   #faz o tratamento necessario da string
+        # #                                                                 #faz um append na lista de urls
+        # #     #Download da Imagem
+        # #     #request da url da img
+        # #     r = requests.get(url_img,headers=headers)
+        # #     time.sleep(1)
+        # #     directory_imagem = directory / f'foto_{contador}.jpg'
+        # #     print(directory_imagem)
+        # #     #Cria arquivo jpg e escreve conteudo do request nele
+        # #     with open(directory_imagem,'wb') as f:
+        # #         f.write(r.content)
+        # #     contador +=1  #contador incrementa 1
+        # #     comando = f"""INSERT INTO garimpofotos (idgarimpo, url , criadopor, criadoem, alteradopor, alteradoem) 
+        # #                     VALUES ("{id_garimpo}", "{directory_imagem}", "Gustavo", "{tempo}", "Gustavo", "{tempo}")"""
+        # #     cursor.execute(comando)
+        # #     conexao.commit()    
 
        
        

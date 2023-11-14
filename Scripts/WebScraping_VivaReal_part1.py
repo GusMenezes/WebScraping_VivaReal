@@ -1,51 +1,43 @@
-import requests
-from bs4 import BeautifulSoup
-import time ,re
+import requests,time ,re, math
 import pandas as pd
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.action_chains import ActionChains
-from selenium.webdriver.common.by import By
 
-#Opções e Headers usados para requests
-headers = {'user-agent': 'Mozilla/5.0'}
-options = Options()
-#options.add_argument('--headless')
-options.add_argument('window-size=1366,768')
-options.add_argument("'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36'")
-
-url_anuncios = 'https://www.vivareal.com.br/venda/minas-gerais/uberlandia/condominio_residencial/#onde=Brasil,Minas%20Gerais,Uberl%C3%A2ndia,,,,,,BR%3EMinas%20Gerais%3ENULL%3EUberlandia,,,&preco-desde=1000000'
-
-
-#Abre Navegador com Selenium
-navegador = webdriver.Chrome(options=options)
-navegador.get(url_anuncios)
-time.sleep(3)
-
+payload = {}
+headers = {
+  'X-Domain': 'www.vivareal.com.br',
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
+  'Cookie': '__cf_bm=ZgTGt6dmIeUY3LfC06kjtCrkJWvoasCS6KiPxWRuEhM-1699977501-0-AZ/aH0E3BRiOu6aTEWqQs/zNcSUuCoCqJBpe5TdOApY1Yd/xQzMOfDSY4KfQBb9o5ygzaUOnO1X4IqmfOVw+76Y=; __cfruid=bd7cd5a4a2129926c45f4d8e9e1524c9723cf8c9-1699977501'
+}
 
 lista_url = []  #Lista para guardar todos links de cada Imovel
 
+#Pega a quantidades de anuncios no site
+url = f"https://glue-api.vivareal.com/v2/listings?addressCity=Uberlândia&addressLocationId=BR>Minas Gerais>NULL>Uberlandia&addressNeighborhood=&addressState=Minas Gerais&addressCountry=Brasil&addressStreet=&addressZone=&addressPointLat=-18.912775&addressPointLon=-48.275523&business=SALE&facets=amenities&unitTypes=HOME&unitSubTypes=CONDOMINIUM&unitTypesV3=CONDOMINIUM&usageTypes=RESIDENTIAL&listingType=USED&parentId=null&categoryPage=RESULT&includeFields=search(result(listings(listing(displayAddressType,amenities,usableAreas,constructionStatus,listingType,description,title,unitTypes,nonActivationReason,propertyType,unitSubTypes,id,portal,parkingSpaces,address,suites,publicationType,externalId,bathrooms,usageTypes,totalAreas,advertiserId,bedrooms,pricingInfos,showPrice,status,advertiserContact,videoTourLink,whatsappNumber,stamps),account(id,name,logoUrl,licenseNumber,showAddress,legacyVivarealId,phones,tier),medias,accountLink,link)),totalCount),page,seasonalCampaigns,fullUriFragments,nearby(search(result(listings(listing(displayAddressType,amenities,usableAreas,constructionStatus,listingType,description,title,unitTypes,nonActivationReason,propertyType,unitSubTypes,id,portal,parkingSpaces,address,suites,publicationType,externalId,bathrooms,usageTypes,totalAreas,advertiserId,bedrooms,pricingInfos,showPrice,status,advertiserContact,videoTourLink,whatsappNumber,stamps),account(id,name,logoUrl,licenseNumber,showAddress,legacyVivarealId,phones,tier),medias,accountLink,link)),totalCount)),expansion(search(result(listings(listing(displayAddressType,amenities,usableAreas,constructionStatus,listingType,description,title,unitTypes,nonActivationReason,propertyType,unitSubTypes,id,portal,parkingSpaces,address,suites,publicationType,externalId,bathrooms,usageTypes,totalAreas,advertiserId,bedrooms,pricingInfos,showPrice,status,advertiserContact,videoTourLink,whatsappNumber,stamps),account(id,name,logoUrl,licenseNumber,showAddress,legacyVivarealId,phones,tier),medias,accountLink,link)),totalCount)),account(id,name,logoUrl,licenseNumber,showAddress,legacyVivarealId,phones,tier,phones),developments(search(result(listings(listing(displayAddressType,amenities,usableAreas,constructionStatus,listingType,description,title,unitTypes,nonActivationReason,propertyType,unitSubTypes,id,portal,parkingSpaces,address,suites,publicationType,externalId,bathrooms,usageTypes,totalAreas,advertiserId,bedrooms,pricingInfos,showPrice,status,advertiserContact,videoTourLink,whatsappNumber,stamps),account(id,name,logoUrl,licenseNumber,showAddress,legacyVivarealId,phones,tier),medias,accountLink,link)),totalCount)),owners(search(result(listings(listing(displayAddressType,amenities,usableAreas,constructionStatus,listingType,description,title,unitTypes,nonActivationReason,propertyType,unitSubTypes,id,portal,parkingSpaces,address,suites,publicationType,externalId,bathrooms,usageTypes,totalAreas,advertiserId,bedrooms,pricingInfos,showPrice,status,advertiserContact,videoTourLink,whatsappNumber,stamps),account(id,name,logoUrl,licenseNumber,showAddress,legacyVivarealId,phones,tier),medias,accountLink,link)),totalCount))&size=36&from=0&q=&developmentsSize=5&__vt=mtc:nodecay,B&levels=CITY,UNIT_TYPE&ref=&pointRadius=&isPOIQuery="
+resposta = requests.get(url,headers=headers,data=payload,timeout=1)
+json = resposta.json()
+numero_anuncios = json.get('page').get('metaContent').get('description')
+temp = re.findall(r'\d+', numero_anuncios)
+numero_anuncios = int(''.join(temp))
 
-pages = True   #Enquanto verdadeiro, existe pagina seguinte
-while pages == True:
+
+contador = 0
+for j in range(0,math.floor(numero_anuncios/36)):
     try:     
-        #Pega o html fatorado
-        site = BeautifulSoup(navegador.page_source,'html.parser')
-        time.sleep(5)
-        
-        #Pega todas as tags que contem as urls desejadas
-        imoveis = site.find_all('div',attrs={"data-type":"property"})
+        url = f"https://glue-api.vivareal.com/v2/listings?addressCity=Uberlândia&addressLocationId=BR>Minas Gerais>NULL>Uberlandia&addressNeighborhood=&addressState=Minas Gerais&addressCountry=Brasil&addressStreet=&addressZone=&addressPointLat=-18.912775&addressPointLon=-48.275523&business=SALE&facets=amenities&unitTypes=HOME&unitSubTypes=CONDOMINIUM&unitTypesV3=CONDOMINIUM&usageTypes=RESIDENTIAL&listingType=USED&parentId=null&categoryPage=RESULT&includeFields=search(result(listings(listing(displayAddressType,amenities,usableAreas,constructionStatus,listingType,description,title,unitTypes,nonActivationReason,propertyType,unitSubTypes,id,portal,parkingSpaces,address,suites,publicationType,externalId,bathrooms,usageTypes,totalAreas,advertiserId,bedrooms,pricingInfos,showPrice,status,advertiserContact,videoTourLink,whatsappNumber,stamps),account(id,name,logoUrl,licenseNumber,showAddress,legacyVivarealId,phones,tier),medias,accountLink,link)),totalCount),page,seasonalCampaigns,fullUriFragments,nearby(search(result(listings(listing(displayAddressType,amenities,usableAreas,constructionStatus,listingType,description,title,unitTypes,nonActivationReason,propertyType,unitSubTypes,id,portal,parkingSpaces,address,suites,publicationType,externalId,bathrooms,usageTypes,totalAreas,advertiserId,bedrooms,pricingInfos,showPrice,status,advertiserContact,videoTourLink,whatsappNumber,stamps),account(id,name,logoUrl,licenseNumber,showAddress,legacyVivarealId,phones,tier),medias,accountLink,link)),totalCount)),expansion(search(result(listings(listing(displayAddressType,amenities,usableAreas,constructionStatus,listingType,description,title,unitTypes,nonActivationReason,propertyType,unitSubTypes,id,portal,parkingSpaces,address,suites,publicationType,externalId,bathrooms,usageTypes,totalAreas,advertiserId,bedrooms,pricingInfos,showPrice,status,advertiserContact,videoTourLink,whatsappNumber,stamps),account(id,name,logoUrl,licenseNumber,showAddress,legacyVivarealId,phones,tier),medias,accountLink,link)),totalCount)),account(id,name,logoUrl,licenseNumber,showAddress,legacyVivarealId,phones,tier,phones),developments(search(result(listings(listing(displayAddressType,amenities,usableAreas,constructionStatus,listingType,description,title,unitTypes,nonActivationReason,propertyType,unitSubTypes,id,portal,parkingSpaces,address,suites,publicationType,externalId,bathrooms,usageTypes,totalAreas,advertiserId,bedrooms,pricingInfos,showPrice,status,advertiserContact,videoTourLink,whatsappNumber,stamps),account(id,name,logoUrl,licenseNumber,showAddress,legacyVivarealId,phones,tier),medias,accountLink,link)),totalCount)),owners(search(result(listings(listing(displayAddressType,amenities,usableAreas,constructionStatus,listingType,description,title,unitTypes,nonActivationReason,propertyType,unitSubTypes,id,portal,parkingSpaces,address,suites,publicationType,externalId,bathrooms,usageTypes,totalAreas,advertiserId,bedrooms,pricingInfos,showPrice,status,advertiserContact,videoTourLink,whatsappNumber,stamps),account(id,name,logoUrl,licenseNumber,showAddress,legacyVivarealId,phones,tier),medias,accountLink,link)),totalCount))&size=36&from={contador}&q=&developmentsSize=5&__vt=mtc:nodecay,B&levels=CITY,UNIT_TYPE&ref=&pointRadius=&isPOIQuery="
+        time.sleep(1.5)
+        resposta = requests.get(url,headers=headers,data=payload,timeout=1)
+        json = resposta.json()
+        imoveis = json.get('search').get('result').get('listings')
+        print(j)
 
-        for iv in imoveis: #for 
-           
-            #Coleta Url imovel
-            full_url = iv.find(class_='property-card__main-info').a.get('href')
-            full_url = 'https://www.vivareal.com.br'+full_url
-            url_iv = full_url
+        for i in imoveis:
+            try:
+                url_anuncio = i.get('link').get('href')
+                url_anuncio = "https://www.vivareal.com.br" + url_anuncio
+                lista_url.append(url_anuncio)
 
-            lista_url.append(url_iv)
-        
-        
+            except:
+                pass
+        contador +=36 
 
     except:
         print('Erro, 10 min para retomada')
@@ -62,22 +54,5 @@ while pages == True:
         time.sleep(60)
 
 
-    #Muda de pagina
-    try:
-        receita = navegador.find_element(By.XPATH, '/html/body/main/div[2]/div[1]/section/div[2]/div[2]/div/ul/li[9]/button')
-        navegador.execute_script("arguments[0].scrollIntoView(true);", receita)
-        time.sleep(0.5)
-        receita.click()
-
-    except Exception as e:
-        print(e)
-        pages = False
-
-
-#fecha o chromedriver
-navegador.quit()
-
-
-
 df = pd.DataFrame(lista_url,columns=['Url_imovel'])
-df.to_csv("D:\ginga\Documents\Gustavo\WebScraping_VivaReal\WebScraping_VivaReal\Exel_and_Csv_Files\LISTA_URLS_VIVAREAL.csv",index=False)
+df.to_csv(r"D:\ginga\Documents\Gustavo\WebScraping_VivaReal\WebScraping_VivaReal\Exel_and_Csv_Files\LISTA_URLS_VIVAREAL.csv",index=False)

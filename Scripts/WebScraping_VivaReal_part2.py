@@ -6,20 +6,6 @@ import numpy as np
 from pathlib import Path
 
 
-def extrai_atributos(json_object, attribute_path, index=0):
-    try:
-        # Use reduce to traverse the attribute path in the JSON object
-        value = functools.reduce(lambda d, key: d.get(key, {}), attribute_path, json_object)
-        
-        # If it's a list, use the specified index
-        if isinstance(value, list):
-            value = value[index]
-
-        return value
-    except (KeyError, TypeError, IndexError):
-        return None
-
-
 def traduz_palavra(palavra):
     dicionario_traducoes = {
         "USED": "usado",
